@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#eef2f5">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="세차날씨">
+<title>세차 날씨</title>
+<style>
+:root{
+  --bg:#eef2f5; --surface:#ffffff; --ink:#16202b; --muted:#5a6878; --faint:#8a96a3; --line:#dbe2e8;
+  --rain:#2a66cc; --rain-soft:#dce8fb; --night:#f4f6f9;
+  --good:#16804f; --good-soft:#dcf2e6; --warn:#a86a00; --warn-soft:#fbefd6; --bad:#c03737; --bad-soft:#fbe1e1;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#11161c; --surface:#19212a; --ink:#e6ecf2; --muted:#9daab8; --faint:#6c7987; --line:#2a3541;
+    --rain:#6aa2ff; --rain-soft:#1d2f4d; --night:#151c24;
+    --good:#4cc68a; --good-soft:#163527; --warn:#e3a640; --warn-soft:#3a2c12; --bad:#ff7b7b; --bad-soft:#3d1c1c;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#11161c; --surface:#19212a; --ink:#e6ecf2; --muted:#9daab8; --faint:#6c7987; --line:#2a3541;
+  --rain:#6aa2ff; --rain-soft:#1d2f4d; --night:#151c24;
+  --good:#4cc68a; --good-soft:#163527; --warn:#e3a640; --warn-soft:#3a2c12; --bad:#ff7b7b; --bad-soft:#3d1c1c;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;font-size:15px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 40px;display:grid;gap:18px}
+.wrap > *, .card > *{min-width:0}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px}
+h1{margin:0;font-size:24px;letter-spacing:-.02em}
+.sub{color:var(--muted);font-size:13px}
+button{font:inherit;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:7px 14px;cursor:pointer}
+button:hover{border-color:var(--rain)}
+button:focus-visible,.day:focus-visible{outline:2px solid var(--rain);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px}
+h2{margin:0 0 12px;font-size:16px}
+h2 .sub{font-weight:400;margin-left:6px}
+
+.today{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.verdict{border-radius:10px;padding:14px 16px;display:grid;gap:4px}
+.verdict .when{font-size:13px;font-weight:700;letter-spacing:.04em}
+.verdict .big{font-size:20px;font-weight:700}
+.verdict .why{font-size:13.5px;color:var(--ink)}
+.good{background:var(--good-soft)} .good .when,.good .big{color:var(--good)}
+.warn{background:var(--warn-soft)} .warn .when,.warn .big{color:var(--warn)}
+.bad{background:var(--bad-soft)} .bad .when,.bad .big{color:var(--bad)}
+
+.week{display:grid;grid-template-columns:repeat(7,minmax(128px,1fr));gap:8px;overflow-x:auto;padding-bottom:4px}
+.day{border:1px solid var(--line);border-radius:10px;padding:10px;display:grid;gap:4px;cursor:pointer;background:var(--surface);text-align:left}
+.day:hover{border-color:var(--rain)}
+.day .d{font-weight:700}
+.day .d .sub{font-weight:400}
+.day .sym{font-size:26px;line-height:1.2}
+.day .t{font-variant-numeric:tabular-nums}
+.day .t .hi{color:var(--bad);font-weight:700} .day .t .lo{color:var(--rain);font-weight:700}
+.day .r{font-size:12.5px;color:var(--rain);min-height:19px}
+.day .pm{font-size:12px;color:var(--muted)}
+.pill{display:inline-block;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:700;justify-self:start}
+
+.hourly{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:separate;border-spacing:0;font-variant-numeric:tabular-nums;font-size:13px}
+th,td{padding:5px 0;text-align:center;min-width:46px;border-bottom:1px solid var(--line);white-space:nowrap}
+th.lab{position:sticky;left:0;z-index:2;background:var(--surface);text-align:left;padding:5px 10px;min-width:92px;font-weight:600;color:var(--muted);border-right:1px solid var(--line)}
+tr:last-child td,tr:last-child th{border-bottom:0}
+td.night{background:var(--night)}
+td.dstart{border-left:2px solid var(--muted)}
+tr.daterow td{font-weight:700;text-align:left;padding-left:6px;color:var(--ink)}
+td.wet{background:var(--rain-soft)}
+.bar{display:block;margin:0 auto;width:26px;height:28px;position:relative;background:var(--line);border-radius:3px;overflow:hidden}
+.bar i{position:absolute;left:0;right:0;bottom:0;background:var(--rain)}
+.cons{letter-spacing:-1px;color:var(--rain);font-size:11px}
+.cons b{color:var(--line);font-weight:400}
+.now{outline:2px solid var(--rain);outline-offset:-2px}
+
+.links{display:flex;flex-wrap:wrap;gap:8px}
+.links a{color:var(--rain);text-decoration:none;border:1px solid var(--line);border-radius:8px;padding:6px 12px;background:var(--surface)}
+.links a:hover{border-color:var(--rain)}
+.foot{font-size:12.5px;color:var(--muted);display:grid;gap:4px}
+.err{color:var(--bad);font-weight:600}
+@media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>수원 천천동 세차 날씨</h1>
+      <div class="sub" id="status">불러오는 중…</div>
+      <div class="sub" id="next"></div>
+    </div>
+    <button id="refresh" type="button">새로고침</button>
+  </header>
+
+  <section class="today" id="today"></section>
+
+  <section class="card">
+    <h2>일주일 예보 <span class="sub">날짜를 누르면 아래 시간별로 이동해요</span></h2>
+    <div class="week" id="week"></div>
+  </section>
+
+  <section class="card">
+    <h2>1시간 간격 예보 <span class="sub">옆으로 밀어서 보세요 · 파란 칸 = 비 예상</span></h2>
+    <div class="hourly" id="hourlyBox"><table id="hourly"></table></div>
+  </section>
+
+  <section class="card">
+    <h2>공식 예보도 같이 보기</h2>
+    <div class="links">
+      <a href="https://www.weather.go.kr/w/index.do" target="_blank" rel="noopener">기상청 날씨누리</a>
+      <a href="https://www.weather.go.kr/w/image/radar.do" target="_blank" rel="noopener">기상청 레이더 (지금 비구름)</a>
+      <a href="https://www.airkorea.or.kr/web/" target="_blank" rel="noopener">에어코리아 미세먼지</a>
+    </div>
+  </section>
+
+  <div class="foot">
+    <div>예보 출처: Open-Meteo가 모아 주는 5개 기관 모델 — 유럽중기예보센터(ECMWF), 영국기상청, 독일기상청, 미국 NOAA, 일본기상청. 미세먼지는 유럽 CAMS 예보(약 5일).</div>
+    <div>"모델 합의"는 5개 중 몇 개가 그 시간에 비(0.1mm 이상)를 예상하는지예요. 많이 겹칠수록 믿을 만해요. 기온·바람·날씨 그림은 ECMWF 기준이에요.</div>
+    <div>세차 판단은 영업시간(09~19시) 기준으로 만든 참고용 규칙이에요. 10분마다, 그리고 화면을 다시 열 때마다 새로 받아요. 예보 모델 자체는 1~6시간마다 갱신되니, 지금 당장 비구름은 기상청 레이더로 보세요.</div>
+  </div>
+</div>
+
+<script>
+const LAT = 37.297, LON = 126.972;
+const MODELS = ['ecmwf_ifs', 'ukmo_seamless', 'icon_seamless', 'gfs_seamless', 'jma_seamless'];
+const CACHE = 'wash-weather-cache-v1';
+const OPEN = 9, CLOSE = 19;
+const $ = id => document.getElementById(id);
+
+const WX = c => c == null ? ['', ''] :
+  c === 0 ? ['☀', '맑음'] : c <= 2 ? ['⛅', '구름 조금'] : c === 3 ? ['☁', '흐림'] :
+  c <= 48 ? ['🌫', '안개'] : c <= 57 ? ['🌦', '이슬비'] : c <= 67 ? ['🌧', '비'] :
+  c <= 77 ? ['❄', '눈'] : c <= 82 ? ['🌧', '소나기'] : c <= 86 ? ['❄', '눈'] : ['⛈', '뇌우'];
+const PM10 = v => v == null ? null : v <= 30 ? ['좋음', 'good'] : v <= 80 ? ['보통', 'good'] : v <= 150 ? ['나쁨', 'warn'] : ['매우나쁨', 'bad'];
+const PM25 = v => v == null ? null : v <= 15 ? ['좋음', 'good'] : v <= 35 ? ['보통', 'good'] : v <= 75 ? ['나쁨', 'warn'] : ['매우나쁨', 'bad'];
+const DOW = ['일', '월', '화', '수', '목', '금', '토'];
+
+async function load(){
+  $('status').textContent = '불러오는 중…';
+  const vars = 'temperature_2m,precipitation,precipitation_probability,weather_code,wind_speed_10m,relative_humidity_2m';
+  const fUrl = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=${vars}&models=${MODELS.join(',')}&timezone=Asia%2FSeoul&forecast_days=7&wind_speed_unit=ms`;
+  const aUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${LAT}&longitude=${LON}&hourly=pm10,pm2_5&timezone=Asia%2FSeoul&forecast_days=5`;
+  try {
+    const [f, a] = await Promise.all([fetch(fUrl).then(r => r.json()), fetch(aUrl).then(r => r.json()).catch(() => null)]);
+    if (!f.hourly) throw new Error(f.reason || '예보 응답이 비어 있어요');
+    const data = {f, a, at: Date.now()};
+    try { localStorage.setItem(CACHE, JSON.stringify(data)); } catch(e){}
+    render(data, false);
+  } catch(e){
+    let old = null; try { old = JSON.parse(localStorage.getItem(CACHE)); } catch(_){}
+    if (old){ render(old, true); }
+    else $('status').innerHTML = `<span class="err">예보를 못 받았어요 (${e.message}). 인터넷 연결을 확인하고 [새로고침]을 눌러 주세요.</span>`;
+  }
+}
+
+function build({f, a}){
+  const H = f.hourly, aq = {};
+  if (a && a.hourly) a.hourly.time.forEach((t, i) => aq[t] = {pm10: a.hourly.pm10[i], pm25: a.hourly.pm2_5[i]});
+  return H.time.map((t, i) => {
+    const pick = v => MODELS.map(m => H[`${v}_${m}`] ? H[`${v}_${m}`][i] : null).filter(x => x != null);
+    const amounts = pick('precipitation').sort((x, y) => x - y);
+    const probs = pick('precipitation_probability');
+    const wetN = amounts.filter(x => x >= 0.1).length;
+    const prob = probs.length ? Math.round(probs.reduce((s, x) => s + x, 0) / probs.length) : null;
+    const first = v => { const e = H[`${v}_ecmwf_ifs`]; if (e && e[i] != null) return e[i]; const p = pick(v); return p.length ? p[0] : null; };
+    const d = new Date(t);
+    return {
+      t, d, h: d.getHours(), day: t.slice(0, 10),
+      temp: first('temperature_2m'), wind: first('wind_speed_10m'), hum: first('relative_humidity_2m'), code: first('weather_code'),
+      amt: amounts.length ? amounts[Math.floor(amounts.length / 2)] : null, prob, wetN, nModels: amounts.length,
+      rain: wetN >= 3 || prob >= 60 ? 2 : wetN >= 2 || prob >= 30 ? 1 : 0,
+      pm10: aq[t] ? aq[t].pm10 : null, pm25: aq[t] ? aq[t].pm25 : null,
+    };
+  });
+}
+
+function rainRanges(hours){
+  const out = []; let s = null;
+  hours.forEach((x, i) => {
+    if (x.rain === 2 && s === null) s = x.h;
+    if (s !== null && (x.rain !== 2 || i === hours.length - 1)){ out.push(`${s}~${x.rain === 2 ? x.h + 1 : x.h}시`); s = null; }
+  });
+  return out;
+}
+
+function summarize(rows){
+  const days = [];
+  rows.forEach(r => { let d = days.find(x => x.day === r.day); if (!d){ d = {day: r.day, d: r.d, hours: []}; days.push(d); } d.hours.push(r); });
+  days.forEach(d => {
+    const H = d.hours, biz = H.filter(x => x.h >= OPEN && x.h < CLOSE);
+    const temps = H.map(x => x.temp).filter(x => x != null);
+    d.hi = Math.max(...temps); d.lo = Math.min(...temps);
+    d.sum = H.reduce((s, x) => s + (x.amt || 0), 0);
+    d.bizRain = biz.filter(x => x.rain === 2).length;
+    d.eveRain = H.filter(x => x.h >= CLOSE && x.rain === 2).length;
+    d.anyRain = H.filter(x => x.rain === 2).length;
+    d.ranges = rainRanges(H);
+    d.probMax = Math.max(0, ...H.map(x => x.prob || 0));
+    const pm = biz.map(x => x.pm10).filter(x => x != null), pm2 = biz.map(x => x.pm25).filter(x => x != null);
+    d.pm10 = pm.length ? Math.max(...pm) : null; d.pm25 = pm2.length ? Math.max(...pm2) : null;
+    // PM10·PM2.5 중 더 나쁜 등급을 그날 미세먼지로 쓴다
+    const g = [PM10(d.pm10), PM25(d.pm25)].filter(Boolean), rank = x => ['좋음', '보통', '나쁨', '매우나쁨'].indexOf(x[0]);
+    d.pm = g.length ? g.sort((x, y) => rank(y) - rank(x))[0] : null;
+    d.bizMin = Math.min(...biz.map(x => x.temp).filter(x => x != null));
+    const codes = biz.map(x => x.code).filter(x => x != null);
+    d.code = d.bizRain ? Math.max(...codes) : codes.length ? codes.sort((x, y) => x - y)[Math.floor(codes.length / 2)] : null;
+  });
+  days.forEach((d, i) => {
+    const prev = days[i - 1], next = days[i + 1];
+    const pmBad = d.pm && d.pm[1] !== 'good';
+    if (d.bizRain >= 2) d.v = ['bad', '비 — 세차 비추', `영업시간에 비 예상 (${d.ranges.join(', ')})`];
+    else if (d.bizRain === 1) d.v = ['warn', '잠깐 비 — 시간 확인', `짧게 비 예상 (${d.ranges.join(', ')})`];
+    else if (d.eveRain >= 2 || (next && next.bizRain >= 2)) d.v = ['warn', '곧 비 소식', d.eveRain >= 2 ? `저녁에 비 (${d.ranges.join(', ')})` : '내일 비 예보 — 오늘 세차는 아까울 수 있어요'];
+    else if (prev && prev.anyRain >= 3) d.v = ['good', '비 그친 뒤 — 세차 수요↑', '전날 비가 와서 차가 더러워진 날이에요'];
+    else if (pmBad) d.v = ['warn', '미세먼지 나쁨', '세차 후 먼지가 금방 앉을 수 있어요'];
+    else if (d.bizMin < 0) d.v = ['warn', '영하 — 결빙 주의', '물기 얼 수 있어요. 문틈·사이드미러 물기 제거 꼼꼼히'];
+    else d.v = ['good', '세차하기 좋음', next ? '오늘·내일 비 소식 없음' : '비 소식 없음 (다음날 예보는 아직 없어요)'];
+  });
+  return days;
+}
+
+function render(data, stale){
+  const nowKey = new Date(); nowKey.setMinutes(0, 0, 0);
+  // 이미 지난 시간은 빼고 본다 (오늘 카드도 남은 시간 기준)
+  const rows = build(data).filter(r => r.d >= nowKey);
+  const days = summarize(rows);
+  const at = new Date(data.at);
+  $('status').innerHTML = `${stale ? '<span class="err">인터넷 연결 실패 — 마지막으로 받은 예보를 보여줘요. </span>' : ''}업데이트 ${at.getMonth() + 1}/${at.getDate()} ${String(at.getHours()).padStart(2, '0')}:${String(at.getMinutes()).padStart(2, '0')}`;
+
+  $('today').innerHTML = days.slice(0, 2).map((d, i) => `
+    <div class="verdict ${d.v[0]}">
+      <div class="when">${i ? '내일' : '오늘'} ${d.d.getMonth() + 1}/${d.d.getDate()} (${DOW[d.d.getDay()]})</div>
+      <div class="big">${d.v[1]}</div>
+      <div class="why">${d.v[2]}</div>
+    </div>`).join('');
+
+  $('week').innerHTML = days.map(d => {
+    const [sym, txt] = WX(d.code), p = d.pm;
+    return `<button class="day" type="button" data-day="${d.day}">
+      <div class="d">${DOW[d.d.getDay()]} <span class="sub">${d.d.getMonth() + 1}/${d.d.getDate()}</span></div>
+      <div class="sym" title="${txt}">${sym}</div>
+      <div class="t"><span class="hi">${Math.round(d.hi)}°</span> / <span class="lo">${Math.round(d.lo)}°</span></div>
+      <div class="r">${d.ranges.length ? `비 ${d.ranges.join(', ')} · ${d.sum.toFixed(1)}mm` : d.probMax >= 30 ? `비 가능성 ${d.probMax}%` : ''}</div>
+      <div class="pm">${p ? `미세먼지 ${p[0]}` : '미세먼지 예보 전'}</div>
+      <span class="pill ${d.v[0]}" style="color:var(--${d.v[0]})">${d.v[1].split(' — ')[0]}</span>
+    </button>`;
+  }).join('');
+
+  const show = rows;
+  const cls = (r, i) => [r.h >= CLOSE || r.h < 7 ? 'night' : '', i === 0 || r.h === 0 ? 'dstart' : '', +r.d === +nowKey ? 'now' : ''].join(' ');
+  const row = (label, fn, extra) => `<tr${extra || ''}><th class="lab">${label}</th>${show.map((r, i) => `<td class="${cls(r, i)}${fn.wet && r.rain ? ' wet' : ''}" data-day="${r.day}">${fn(r, i)}</td>`).join('')}</tr>`;
+  const wetCell = f => (f.wet = true, f);
+  $('hourly').innerHTML =
+    row('날짜', (r, i) => i === 0 || r.h === 0 ? `${r.d.getMonth() + 1}/${r.d.getDate()} ${DOW[r.d.getDay()]}` : '', ' class="daterow"') +
+    row('시각', r => `${r.h}시`) +
+    row('날씨', r => `<span title="${WX(r.code)[1]}">${WX(r.code)[0]}</span>`) +
+    row('기온', r => r.temp == null ? '' : `${Math.round(r.temp)}°`) +
+    row('강수확률', wetCell(r => r.prob == null ? '' : `<span class="bar" title="${r.prob}%"><i style="height:${r.prob}%"></i></span>${r.prob}%`)) +
+    row('강수량', wetCell(r => r.amt == null || r.amt < 0.1 ? '–' : `${r.amt.toFixed(1)}`)) +
+    row('모델 합의', wetCell(r => `<span class="cons" title="${r.nModels}개 중 ${r.wetN}개가 비 예상">${'●'.repeat(r.wetN)}<b>${'●'.repeat(Math.max(0, r.nModels - r.wetN))}</b></span>`)) +
+    row('바람 m/s', r => r.wind == null ? '' : r.wind.toFixed(0)) +
+    row('습도', r => r.hum == null ? '' : `${Math.round(r.hum)}%`) +
+    row('미세먼지', r => { const g = [PM10(r.pm10), PM25(r.pm25)].filter(Boolean), rank = x => ['좋음', '보통', '나쁨', '매우나쁨'].indexOf(x[0]); const p = g.sort((x, y) => rank(y) - rank(x))[0]; return p ? `<span style="color:var(--${p[1]})">${p[0]}</span>` : ''; });
+
+  document.querySelectorAll('.day').forEach(b => b.onclick = () => {
+    const box = $('hourlyBox');
+    const cell = [...box.querySelectorAll(`td[data-day="${b.dataset.day}"]`)];
+    const target = cell.find((c, i) => show.filter(r => r.day === b.dataset.day)[i].h >= OPEN) || cell[0];
+    if (!target) return;
+    box.scrollTo({left: target.offsetLeft - box.querySelector('th.lab').offsetWidth, behavior: 'smooth'});
+    box.scrollIntoView({behavior: 'smooth', block: 'center'});
+  });
+}
+
+// 10분마다, 그리고 화면을 다시 켤 때(휴대폰 잠금 해제·탭 복귀)마다 새로 받는다
+const EVERY = 10 * 60 * 1000;
+let lastLoad = 0;
+function tick(){
+  const left = Math.max(0, EVERY - (Date.now() - lastLoad));
+  if (lastLoad && left === 0) return refreshNow();
+  $('next').textContent = lastLoad ? `다음 자동 새로고침 ${Math.ceil(left / 60000)}분 뒤` : '';
+}
+function refreshNow(){ lastLoad = Date.now(); load(); tick(); }
+$('refresh').onclick = refreshNow;
+document.addEventListener('visibilitychange', () => { if (!document.hidden && Date.now() - lastLoad > 60 * 1000) refreshNow(); });
+refreshNow();
+setInterval(tick, 30 * 1000);
+</script>
+</body>
+</html>
