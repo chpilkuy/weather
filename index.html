@@ -59,6 +59,8 @@ button:focus-visible{outline:2px solid var(--rain);outline-offset:2px}
 .hero .now{grid-row:2/4;grid-column:2;text-align:center}
 .hero .now svg{width:44px;height:44px;display:block;margin:0 auto}
 .hero .now b{display:block;font-size:30px;font-weight:700;letter-spacing:-.03em;line-height:1.1}
+.hero .now small{display:block;font-size:11px;color:var(--muted);margin-top:2px}
+.srcnote{margin:10px 0 0;font-size:12px;color:var(--muted)}
 .cool{--v:var(--rain);--vs:var(--rain-soft)} .good{--v:var(--good);--vs:var(--good-soft)} .warn{--v:var(--warn);--vs:var(--warn-soft)} .bad{--v:var(--bad);--vs:var(--bad-soft)}
 
 .tmr{display:flex;align-items:center;gap:10px;padding:14px 18px;font-size:14px}
@@ -149,6 +151,7 @@ details p{margin:6px 0}
   <section class="card">
     <div class="label">7일 예보 · 날짜를 누르면 시간별이 바뀌어요</div>
     <div class="days" id="days"></div>
+    <p class="srcnote" id="srcnote"></p>
   </section>
 
   <section class="brand">
@@ -177,7 +180,8 @@ details p{margin:6px 0}
 
   <details>
     <summary>예보 기준 보기</summary>
-    <p>유럽(ECMWF)·영국·독일·미국·일본 기상청의 5개 예보 모델을 Open-Meteo로 받아 합쳐요. 3개 이상 모델이 비(0.1mm↑)를 예상하거나 평균 강수확률이 60% 이상이면 "비"로 봐요. 시간대가 서로 달라도 낮에 1mm 이상 비를 보는 모델이 3곳 이상이면 "비 올 가능성 높아요"로 알려드려요. 기온·날씨 그림은 ECMWF 기준이에요.</p>
+    <p>기상청 단기예보(수원 장안구 격자)를 1시간마다 받아 기준으로 써요. 지금 기온은 기상청 실황 관측값이에요. 기상청 단기예보가 닿지 않는 뒤쪽 날짜는 아래 해외 모델 예보로 채워요.</p>
+    <p>유럽(ECMWF)·영국·독일·미국·일본 기상청의 5개 예보 모델을 Open-Meteo로 받아 합쳐요. 기상청 예보가 있는 날에도 "해외 예보 몇 곳이 비를 보는지"를 함께 보여줘서 예보끼리 엇갈리는지 알 수 있어요. 3개 이상 모델이 비(0.1mm↑)를 예상하거나 평균 강수확률이 60% 이상이면 "비"로 봐요. 시간대가 서로 달라도 낮에 1mm 이상 비를 보는 모델이 3곳 이상이면 "비 올 가능성 높아요"로 알려드려요. 기온·날씨 그림은 ECMWF 기준이에요.</p>
     <p>미세먼지는 유럽 CAMS 예보(약 5일)이고, PM10·PM2.5 중 더 나쁜 등급을 보여줘요.</p>
     <p>오늘의 한마디는 낮 시간(09~19시) 비·미세먼지·기온·바람을 보고 고른 참고용 문구예요. 10분마다, 그리고 앱을 다시 열 때마다 새로 받아요. 지금 당장 비구름은 기상청 레이더가 가장 정확해요.</p>
   </details>
@@ -227,9 +231,13 @@ async function load(){
   const fUrl = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=${vars}&models=${MODELS.join(',')}&timezone=Asia%2FSeoul&forecast_days=7&wind_speed_unit=ms`;
   const aUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${LAT}&longitude=${LON}&hourly=pm10,pm2_5&timezone=Asia%2FSeoul&forecast_days=5`;
   try {
-    const [f, a] = await Promise.all([fetch(fUrl).then(r => r.json()), fetch(aUrl).then(r => r.json()).catch(() => null)]);
+    const [f, a, k] = await Promise.all([
+      fetch(fUrl).then(r => r.json()),
+      fetch(aUrl).then(r => r.json()).catch(() => null),
+      fetch(`kma.json?t=${Date.now()}`, {cache: 'no-store'}).then(r => r.ok ? r.json() : null).catch(() => null),
+    ]);
     if (!f.hourly) throw new Error(f.reason || '예보 응답이 비어 있어요');
-    const data = {f, a, at: Date.now()};
+    const data = {f, a, k, at: Date.now()};
     try { localStorage.setItem(CACHE, JSON.stringify(data)); } catch(e){}
     render(data, false);
   } catch(e){
@@ -241,10 +249,34 @@ async function load(){
   }
 }
 
-function build({f, a}){
-  const H = f.hourly, aq = {};
+// 기상청 하늘상태(SKY)·강수형태(PTY)를 그림 코드로
+function kmaCode(sky, pty){
+  if (pty == null && sky == null) return null;
+  if (pty === 1 || pty === 2 || pty === 4) return pty === 4 ? 80 : 63;
+  if (pty === 3) return 73;
+  if (pty === 5 || pty === 6) return 51;
+  if (pty === 7) return 71;
+  return sky === 1 ? 0 : sky === 3 ? 2 : sky === 4 ? 3 : null;
+}
+// 기상청 자료가 8시간 넘게 갱신 안 됐으면 쓰지 않는다
+const kmaFresh = k => k && k.vilageBase && k.hours && Date.now() - new Date(k.updated).getTime() < 8 * 3600e3 && !k.fallbackFrom ||
+  k && k.fallbackFrom && Date.now() - new Date(k.fallbackFrom).getTime() < 8 * 3600e3;
+
+function build({f, a, k}){
+  const H = f.hourly, aq = {}, K = kmaFresh(k) ? k.hours : null;
   if (a && a.hourly) a.hourly.time.forEach((t, i) => aq[t] = {pm10: a.hourly.pm10[i], pm25: a.hourly.pm2_5[i]});
-  return H.time.map((t, i) => {
+  return H.time.map((t, i) => withKma(K && K[t], buildRow(H, aq, t, i)));
+}
+function withKma(K, r){
+  if (!K || K.tmp == null) return r;
+  // 기상청 값으로 바꾸고, 해외 모델 값(wetN·byModel)은 비교용으로 남긴다
+  return {...r, src: 'kma',
+    temp: K.tmp, prob: K.pop ?? r.prob, amt: K.pcp ?? r.amt, wind: K.wsd ?? r.wind, hum: K.reh ?? r.hum,
+    code: kmaCode(K.sky, K.pty) ?? r.code,
+    rain: [1, 2, 3, 4].includes(K.pty) ? 2 : [5, 6, 7].includes(K.pty) || K.pop >= 40 ? 1 : 0};
+}
+function buildRow(H, aq, t, i){
+  {
     const pick = v => MODELS.map(m => H[`${v}_${m}`] ? H[`${v}_${m}`][i] : null).filter(x => x != null);
     const byModel = MODELS.map(m => H[`precipitation_${m}`] ? H[`precipitation_${m}`][i] : null);
     const amounts = pick('precipitation').sort((x, y) => x - y);
@@ -261,7 +293,7 @@ function build({f, a}){
       night: d.getHours() < 6 || d.getHours() >= 18,
       pm10: aq[t] ? aq[t].pm10 : null, pm25: aq[t] ? aq[t].pm25 : null,
     };
-  });
+  }
 }
 
 function rainRanges(hours){
@@ -278,6 +310,7 @@ function summarize(rows){
   rows.forEach(r => { let d = days.find(x => x.day === r.day); if (!d){ d = {day: r.day, d: r.d, hours: []}; days.push(d); } d.hours.push(r); });
   days.forEach(d => {
     const H = d.hours, biz = H.filter(x => x.h >= OPEN && x.h < CLOSE);
+    d.kma = H.some(x => x.src === 'kma');
     const temps = H.map(x => x.temp).filter(x => x != null);
     d.hi = Math.max(...temps); d.lo = Math.min(...temps);
     d.sum = H.reduce((s, x) => s + (x.amt || 0), 0);
@@ -296,17 +329,19 @@ function summarize(rows){
     d.bizMin = Math.min(...biz.map(x => x.temp).filter(x => x != null));
     const codes = biz.length ? biz.map(x => x.code).filter(x => x != null) : H.map(x => x.code).filter(x => x != null);
     d.code = d.bizRain ? Math.max(...codes) : codes.length ? codes.sort((x, y) => x - y)[Math.floor(codes.length / 2)] : null;
-    // 5개 모델 합의로 비가 아니면 그림도 비로 그리지 않는다 (판단과 그림이 어긋나지 않게)
-    if (!d.bizRain && d.dayWet < 3 && d.code >= 51) d.code = 3;
-    if (!d.bizRain && d.dayWet >= 3 && d.code < 51) d.code = 61;
+    // 판단과 그림이 어긋나지 않게: 기상청 날은 기상청 판단, 그 뒤 날은 해외 모델 합의를 따른다
+    if (!d.bizRain && (d.kma || d.dayWet < 3) && d.code >= 51) d.code = 3;
+    if (!d.kma && !d.bizRain && d.dayWet >= 3 && d.code < 51) d.code = 61;
   });
   // 그날 날씨 한마디: 중요한 것부터 모아서 맨 앞을 제목으로, 앞의 두 개를 설명으로 쓴다
   days.forEach(d => {
     const tips = [], when = d.ranges.length ? ` (${d.ranges.join(', ')})` : '';
     const snow = d.code >= 71 && d.code <= 77 || d.code === 85 || d.code === 86;
     if (d.bizRain >= 2) tips.push(snow ? ['bad', '눈 와요', `빙판길 조심하세요${when}`] : ['bad', '비 와요', `우산 챙기세요${when}`]);
-    else if (d.dayWet >= 3) tips.push(['bad', '비 올 가능성 높아요', `우산 챙기세요 (예보 ${d.dayN}곳 중 ${d.dayWet}곳이 비, 시간은 엇갈려요)`]);
-    else if (d.bizRain === 1 || d.dayWet === 2) tips.push(['warn', d.bizRain ? '잠깐 비' : '비 올 수도', `작은 우산 챙기세요${when}`]);
+    else if (d.kma && d.bizRain === 1) tips.push(['warn', '잠깐 비', `작은 우산 챙기세요${when}`]);
+    else if (d.kma && d.dayWet >= 3) tips.push(['warn', '비 올 수도', `기상청은 비 소식 없지만 해외 예보 ${d.dayN}곳 중 ${d.dayWet}곳은 비를 봐요`]);
+    else if (!d.kma && d.dayWet >= 3) tips.push(['bad', '비 올 가능성 높아요', `우산 챙기세요 (예보 ${d.dayN}곳 중 ${d.dayWet}곳이 비, 시간은 엇갈려요)`]);
+    else if (!d.kma && (d.bizRain === 1 || d.dayWet === 2)) tips.push(['warn', d.bizRain ? '잠깐 비' : '비 올 수도', `작은 우산 챙기세요${when}`]);
     if (d.hi >= 33) tips.push(['bad', '폭염', '물 자주 드시고 그늘에서 쉬세요']);
     else if (d.hi >= 30) tips.push(['warn', '더워요', '물 자주 챙겨 드세요']);
     if (d.pm && d.pm[0] === '매우나쁨') tips.push(['bad', '미세먼지 매우나쁨', '외출할 땐 마스크 꼭 쓰세요']);
@@ -325,6 +360,7 @@ function summarize(rows){
 const md = d => `${d.getMonth() + 1}/${d.getDate()}`;
 const dayName = (d, i) => i === 0 ? '오늘' : i === 1 ? '내일' : DOW[d.d.getDay()];
 const short = v => v[1].split(' — ')[0];
+const kstTime = b => new Date(`${b.slice(0, 4)}-${b.slice(4, 6)}-${b.slice(6, 8)}T${b.slice(9, 11)}:${b.slice(11, 13)}:00+09:00`).getTime();
 const hourCode = r => !r.rain && r.code >= 51 ? 3 : r.code;
 
 function render(data, stale){
@@ -335,16 +371,20 @@ function render(data, stale){
   const days = summarize(rows);
   if (!days.length) return;
   if (!days.find(d => d.day === sel)) sel = days[0].day;
-  const at = new Date(data.at);
-  $('status').innerHTML = `${stale ? '<span class="err">연결 실패 · 마지막 예보 </span>' : ''}${String(at.getHours()).padStart(2, '0')}:${String(at.getMinutes()).padStart(2, '0')} 업데이트 · 10분마다 자동`;
+  const at = new Date(data.at), k = kmaFresh(data.k) ? data.k : null;
+  const kb = k && k.vilageBase ? `기상청 ${+k.vilageBase.slice(9, 11)}시 발표` : '해외 모델 예보';
+  $('status').innerHTML = `${stale ? '<span class="err">연결 실패 · 마지막 예보 </span>' : ''}${String(at.getHours()).padStart(2, '0')}:${String(at.getMinutes()).padStart(2, '0')} 업데이트 · ${kb}`;
 
+  // 지금: 기상청 실황(관측값)이 2시간 안의 것이면 그걸 쓴다
   const t = days[0], now = rows[0];
+  const ob = k && k.now && k.now.tmp != null && Date.now() - kstTime(k.now.base) < 2 * 3600e3 ? k.now : null;
+  if (ob && [1, 2, 3, 4, 5, 6, 7].includes(ob.pty)) t.v = ['bad', ob.pty === 3 || ob.pty === 7 ? '지금 눈 와요' : '지금 비 와요', `우산 챙기세요 · ${t.v[2]}`];
   $('hero').className = `card hero ${t.v[0]}`;
   $('hero').innerHTML = `
     <div class="when">오늘 ${md(t.d)} (${DOW[t.d.getDay()]})</div>
     <div class="big">${t.v[1]}</div>
     <div class="why">${t.v[2]}</div>
-    <div class="now num">${icon(hourCode(now), now.night)}<b>${now.temp == null ? '' : Math.round(now.temp) + '°'}</b></div>`;
+    <div class="now num">${icon(ob ? kmaCode(null, ob.pty) || hourCode(now) : hourCode(now), now.night)}<b>${ob ? Math.round(ob.tmp) + '°' : now.temp == null ? '' : Math.round(now.temp) + '°'}</b>${ob ? '<small>지금 관측</small>' : ''}</div>`;
 
   const m = days[1];
   $('tmr').hidden = !m;
@@ -358,6 +398,10 @@ function render(data, stale){
       <span class="mid"><span class="v">${short(d.v)}</span>${d.ranges.length ? `<span class="rn">비 ${d.ranges.join(', ')}</span>` : d.probMax >= 30 ? `<span class="rn">비 가능성 ${d.probMax}%</span>` : ''}</span>
       <span class="range num"><span class="lo">${Math.round(d.lo)}°</span><span class="bar"><i style="left:${(d.lo - lo) / span * 100}%;right:${(hi - d.hi) / span * 100}%"></i></span><span class="hi">${Math.round(d.hi)}°</span></span>
     </button>`).join('');
+  const lastKma = [...days].reverse().find(d => d.kma);
+  $('srcnote').textContent = lastKma
+    ? `${lastKma === days[days.length - 1] ? '모든 날' : `${md(lastKma.d)}까지`} 기상청 단기예보${lastKma === days[days.length - 1] ? '' : ', 그 뒤는 해외 5개 모델 예보'}예요.`
+    : '지금은 해외 5개 모델 예보예요. (기상청 예보를 받지 못했어요)';
   document.querySelectorAll('.d').forEach(b => b.onclick = () => {
     sel = b.dataset.day; render(last, stale);
     $('strip').closest('.card').scrollIntoView({behavior: 'smooth', block: 'start'});
@@ -382,6 +426,7 @@ function render(data, stale){
     sd.sum >= 0.1 ? `강수량 <b>${sd.sum.toFixed(1)}mm</b>` : `강수 <b>없음</b>`,
     `미세먼지 <b>${sd.pm ? sd.pm[0] : '예보 전'}</b>`,
     `바람 최대 <b>${Math.round(sd.windMax)}m/s</b>`,
+    sd.kma ? `해외 예보 <b>${sd.dayN}곳 중 ${sd.dayWet}곳 비</b>` : `출처 <b>해외 모델</b>`,
   ].map(x => `<span>${x}</span>`).join('');
 }
 
