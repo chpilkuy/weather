@@ -3,123 +3,150 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#eef2f5">
+<meta name="theme-color" content="#f3f5f8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0f1419" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="세차날씨">
 <title>세차 날씨</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>
 :root{
-  --bg:#eef2f5; --surface:#ffffff; --ink:#16202b; --muted:#5a6878; --faint:#8a96a3; --line:#dbe2e8;
-  --rain:#2a66cc; --rain-soft:#dce8fb; --night:#f4f6f9;
-  --good:#16804f; --good-soft:#dcf2e6; --warn:#a86a00; --warn-soft:#fbefd6; --bad:#c03737; --bad-soft:#fbe1e1;
+  --bg:#f3f5f8; --surface:#ffffff; --ink:#15202b; --muted:#637083; --faint:#9aa5b1; --line:#e6eaef;
+  --rain:#2f6fde; --rain-soft:#e8f0fd; --sun:#e8a317; --cloud:#9aa5b1;
+  --good:#12805c; --good-soft:#e3f4ec; --warn:#b26b00; --warn-soft:#fdf1dc; --bad:#c8383a; --bad-soft:#fde7e7;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#11161c; --surface:#19212a; --ink:#e6ecf2; --muted:#9daab8; --faint:#6c7987; --line:#2a3541;
-    --rain:#6aa2ff; --rain-soft:#1d2f4d; --night:#151c24;
-    --good:#4cc68a; --good-soft:#163527; --warn:#e3a640; --warn-soft:#3a2c12; --bad:#ff7b7b; --bad-soft:#3d1c1c;
+    --bg:#0f1419; --surface:#182029; --ink:#e8edf2; --muted:#9aa7b5; --faint:#64717f; --line:#26313c;
+    --rain:#6ea8ff; --rain-soft:#1a2c47; --sun:#f2b84b; --cloud:#8794a3;
+    --good:#4fcf95; --good-soft:#12301f; --warn:#f0b04a; --warn-soft:#362a12; --bad:#ff8080; --bad-soft:#3a1d1f;
   }
 }
 :root[data-theme="dark"]{
-  --bg:#11161c; --surface:#19212a; --ink:#e6ecf2; --muted:#9daab8; --faint:#6c7987; --line:#2a3541;
-  --rain:#6aa2ff; --rain-soft:#1d2f4d; --night:#151c24;
-  --good:#4cc68a; --good-soft:#163527; --warn:#e3a640; --warn-soft:#3a2c12; --bad:#ff7b7b; --bad-soft:#3d1c1c;
+  --bg:#0f1419; --surface:#182029; --ink:#e8edf2; --muted:#9aa7b5; --faint:#64717f; --line:#26313c;
+  --rain:#6ea8ff; --rain-soft:#1a2c47; --sun:#f2b84b; --cloud:#8794a3;
+  --good:#4fcf95; --good-soft:#12301f; --warn:#f0b04a; --warn-soft:#362a12; --bad:#ff8080; --bad-soft:#3a1d1f;
 }
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:"Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;font-size:15px;line-height:1.5}
-.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 40px;display:grid;gap:18px}
-.wrap > *, .card > *{min-width:0}
-header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px}
-h1{margin:0;font-size:24px;letter-spacing:-.02em}
-.sub{color:var(--muted);font-size:13px}
-button{font:inherit;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:7px 14px;cursor:pointer}
-button:hover{border-color:var(--rain)}
-button:focus-visible,.day:focus-visible{outline:2px solid var(--rain);outline-offset:2px}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px}
-h2{margin:0 0 12px;font-size:16px}
-h2 .sub{font-weight:400;margin-left:6px}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Pretendard Variable",Pretendard,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:640px;margin:0 auto;padding:18px 16px 40px;display:grid;gap:14px}
+.wrap > *{min-width:0}
+.num{font-variant-numeric:tabular-nums}
 
-.today{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
-.verdict{border-radius:10px;padding:14px 16px;display:grid;gap:4px}
-.verdict .when{font-size:13px;font-weight:700;letter-spacing:.04em}
-.verdict .big{font-size:20px;font-weight:700}
-.verdict .why{font-size:13.5px;color:var(--ink)}
-.good{background:var(--good-soft)} .good .when,.good .big{color:var(--good)}
-.warn{background:var(--warn-soft)} .warn .when,.warn .big{color:var(--warn)}
-.bad{background:var(--bad-soft)} .bad .when,.bad .big{color:var(--bad)}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:2px 2px 0}
+.place{font-size:17px;font-weight:700;letter-spacing:-.01em}
+.status{font-size:12.5px;color:var(--muted)}
+.status .err{color:var(--bad);font-weight:600}
+.refresh{width:40px;height:40px;border-radius:50%;border:0;background:var(--surface);color:var(--muted);display:grid;place-items:center;cursor:pointer;flex:none}
+.refresh:hover{color:var(--ink)}
+.refresh svg{width:19px;height:19px}
+.refresh.spin svg{animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+button:focus-visible{outline:2px solid var(--rain);outline-offset:2px}
 
-.week{display:grid;grid-template-columns:repeat(7,minmax(128px,1fr));gap:8px;overflow-x:auto;padding-bottom:4px}
-.day{border:1px solid var(--line);border-radius:10px;padding:10px;display:grid;gap:4px;cursor:pointer;background:var(--surface);text-align:left}
-.day:hover{border-color:var(--rain)}
-.day .d{font-weight:700}
-.day .d .sub{font-weight:400}
-.day .sym{font-size:26px;line-height:1.2}
-.day .t{font-variant-numeric:tabular-nums}
-.day .t .hi{color:var(--bad);font-weight:700} .day .t .lo{color:var(--rain);font-weight:700}
-.day .r{font-size:12.5px;color:var(--rain);min-height:19px}
-.day .pm{font-size:12px;color:var(--muted)}
-.pill{display:inline-block;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:700;justify-self:start}
+.card{background:var(--surface);border-radius:18px;padding:18px}
+.label{font-size:12.5px;font-weight:600;color:var(--muted);margin:0 0 10px;letter-spacing:.01em}
 
-.hourly{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
-table{border-collapse:separate;border-spacing:0;font-variant-numeric:tabular-nums;font-size:13px}
-th,td{padding:5px 0;text-align:center;min-width:46px;border-bottom:1px solid var(--line);white-space:nowrap}
-th.lab{position:sticky;left:0;z-index:2;background:var(--surface);text-align:left;padding:5px 10px;min-width:92px;font-weight:600;color:var(--muted);border-right:1px solid var(--line)}
-tr:last-child td,tr:last-child th{border-bottom:0}
-td.night{background:var(--night)}
-td.dstart{border-left:2px solid var(--muted)}
-tr.daterow td{font-weight:700;text-align:left;padding-left:6px;color:var(--ink)}
-td.wet{background:var(--rain-soft)}
-.bar{display:block;margin:0 auto;width:26px;height:28px;position:relative;background:var(--line);border-radius:3px;overflow:hidden}
-.bar i{position:absolute;left:0;right:0;bottom:0;background:var(--rain)}
-.cons{letter-spacing:-1px;color:var(--rain);font-size:11px}
-.cons b{color:var(--line);font-weight:400}
-.now{outline:2px solid var(--rain);outline-offset:-2px}
+/* 오늘 */
+.hero{display:grid;grid-template-columns:1fr auto;gap:4px 16px;align-items:center;background:var(--vs);padding:22px 20px}
+.hero .when{grid-column:1/-1;font-size:13px;font-weight:600;color:var(--v)}
+.hero .big{font-size:27px;font-weight:800;letter-spacing:-.03em;line-height:1.25;color:var(--v);text-wrap:balance}
+.hero .why{grid-column:1;font-size:14px;color:var(--ink);opacity:.82}
+.hero .now{grid-row:2/4;grid-column:2;text-align:center}
+.hero .now svg{width:44px;height:44px;display:block;margin:0 auto}
+.hero .now b{display:block;font-size:30px;font-weight:700;letter-spacing:-.03em;line-height:1.1}
+.cool{--v:var(--rain);--vs:var(--rain-soft)} .good{--v:var(--good);--vs:var(--good-soft)} .warn{--v:var(--warn);--vs:var(--warn-soft)} .bad{--v:var(--bad);--vs:var(--bad-soft)}
+
+.tmr{display:flex;align-items:center;gap:10px;padding:14px 18px;font-size:14px}
+.tmr .k{color:var(--muted);flex:none}
+.chip{flex:none;border-radius:999px;padding:3px 10px;font-size:12.5px;font-weight:700;background:var(--vs);color:var(--v)}
+.tmr .why{color:var(--muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* 시간별 */
+.strip{display:flex;overflow-x:auto;scroll-snap-type:x proximity;margin:0 -18px;padding:0 12px 4px;scrollbar-width:thin}
+.h{flex:none;width:54px;display:grid;justify-items:center;gap:6px;padding:10px 0 8px;border-radius:12px;scroll-snap-align:start}
+.h.wet{background:var(--rain-soft)}
+.h.off{opacity:.5}
+.h .t{font-size:12.5px;color:var(--muted)}
+.h.first .t{color:var(--ink);font-weight:700}
+.h svg{width:26px;height:26px}
+.h .tp{font-size:15px;font-weight:600}
+.h .p{font-size:11.5px;color:var(--rain);font-weight:600;height:16px}
+.h .pb{width:4px;height:22px;border-radius:2px;background:var(--line);position:relative;overflow:hidden}
+.h .pb i{position:absolute;left:0;right:0;bottom:0;background:var(--rain);border-radius:2px}
+.strip.dry .pb,.strip.dry .p{display:none}
+.dayinfo{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+.dayinfo b{color:var(--ink);font-weight:600}
+
+/* 7일 */
+.days{display:grid}
+.d{display:grid;grid-template-columns:52px 28px 1fr 104px;align-items:center;gap:10px;padding:11px 6px;margin:0 -6px;border:0;border-top:1px solid var(--line);background:none;color:inherit;font:inherit;text-align:left;cursor:pointer;border-radius:10px}
+.d:first-child{border-top:0}
+.d:hover{background:var(--bg)}
+.d.sel{background:var(--rain-soft)}
+.d.sel + .d{border-top-color:transparent}
+.d .dw{font-weight:700;line-height:1.2}
+.d .dw small{display:block;font-weight:400;font-size:12px;color:var(--muted)}
+.d svg{width:26px;height:26px}
+.d .mid{min-width:0;line-height:1.3}
+.d .mid > span{display:block}
+.d .v{font-size:13.5px;font-weight:700;color:var(--v)}
+.d .rn{font-size:12px;color:var(--rain);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.range{display:grid;grid-template-columns:28px 1fr 28px;align-items:center;gap:6px;font-size:14px}
+.range .lo{color:var(--muted);text-align:right}
+.range .hi{font-weight:600}
+.range .bar{height:4px;border-radius:2px;background:var(--line);position:relative}
+.range .bar i{position:absolute;top:0;bottom:0;border-radius:2px;background:linear-gradient(90deg,var(--rain),var(--sun))}
 
 .links{display:flex;flex-wrap:wrap;gap:8px}
-.links a{color:var(--rain);text-decoration:none;border:1px solid var(--line);border-radius:8px;padding:6px 12px;background:var(--surface)}
-.links a:hover{border-color:var(--rain)}
-.foot{font-size:12.5px;color:var(--muted);display:grid;gap:4px}
-.err{color:var(--bad);font-weight:600}
-@media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}}
+.links a{flex:1 1 auto;text-align:center;font-size:13.5px;color:var(--ink);text-decoration:none;background:var(--surface);border-radius:12px;padding:11px 12px}
+.links a:hover{color:var(--rain)}
+details{font-size:12.5px;color:var(--muted);padding:0 4px}
+summary{cursor:pointer;padding:4px 0}
+details p{margin:6px 0}
+@media (max-width:380px){.d{grid-template-columns:44px 26px 1fr 92px;gap:8px}.hero .big{font-size:24px}}
+@media (prefers-reduced-motion: reduce){.refresh.spin svg{animation:none}}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
     <div>
-      <h1>수원 천천동 세차 날씨</h1>
-      <div class="sub" id="status">불러오는 중…</div>
-      <div class="sub" id="next"></div>
+      <div class="place">수원 천천동 날씨</div>
+      <div class="status num" id="status">불러오는 중…</div>
     </div>
-    <button id="refresh" type="button">새로고침</button>
+    <button class="refresh" id="refresh" type="button" aria-label="새로고침">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>
+    </button>
   </header>
 
-  <section class="today" id="today"></section>
+  <section class="card hero" id="hero"></section>
+  <section class="card tmr" id="tmr"></section>
 
   <section class="card">
-    <h2>일주일 예보 <span class="sub">날짜를 누르면 아래 시간별로 이동해요</span></h2>
-    <div class="week" id="week"></div>
+    <div class="label" id="hourTitle">시간별</div>
+    <div class="strip" id="strip"></div>
+    <div class="dayinfo num" id="dayinfo"></div>
   </section>
 
   <section class="card">
-    <h2>1시간 간격 예보 <span class="sub">옆으로 밀어서 보세요 · 파란 칸 = 비 예상</span></h2>
-    <div class="hourly" id="hourlyBox"><table id="hourly"></table></div>
+    <div class="label">7일 예보 · 날짜를 누르면 시간별이 바뀌어요</div>
+    <div class="days" id="days"></div>
   </section>
 
-  <section class="card">
-    <h2>공식 예보도 같이 보기</h2>
-    <div class="links">
-      <a href="https://www.weather.go.kr/w/index.do" target="_blank" rel="noopener">기상청 날씨누리</a>
-      <a href="https://www.weather.go.kr/w/image/radar.do" target="_blank" rel="noopener">기상청 레이더 (지금 비구름)</a>
-      <a href="https://www.airkorea.or.kr/web/" target="_blank" rel="noopener">에어코리아 미세먼지</a>
-    </div>
-  </section>
+  <nav class="links">
+    <a href="https://www.weather.go.kr/w/image/radar.do" target="_blank" rel="noopener">기상청 레이더</a>
+    <a href="https://www.weather.go.kr/w/index.do" target="_blank" rel="noopener">기상청 날씨누리</a>
+    <a href="https://www.airkorea.or.kr/web/" target="_blank" rel="noopener">에어코리아</a>
+  </nav>
 
-  <div class="foot">
-    <div>예보 출처: Open-Meteo가 모아 주는 5개 기관 모델 — 유럽중기예보센터(ECMWF), 영국기상청, 독일기상청, 미국 NOAA, 일본기상청. 미세먼지는 유럽 CAMS 예보(약 5일).</div>
-    <div>"모델 합의"는 5개 중 몇 개가 그 시간에 비(0.1mm 이상)를 예상하는지예요. 많이 겹칠수록 믿을 만해요. 기온·바람·날씨 그림은 ECMWF 기준이에요.</div>
-    <div>세차 판단은 영업시간(09~19시) 기준으로 만든 참고용 규칙이에요. 10분마다, 그리고 화면을 다시 열 때마다 새로 받아요. 예보 모델 자체는 1~6시간마다 갱신되니, 지금 당장 비구름은 기상청 레이더로 보세요.</div>
-  </div>
+  <details>
+    <summary>예보 기준 보기</summary>
+    <p>유럽(ECMWF)·영국·독일·미국·일본 기상청의 5개 예보 모델을 Open-Meteo로 받아 합쳐요. 3개 이상 모델이 비(0.1mm↑)를 예상하거나 평균 강수확률이 60% 이상이면 "비"로 봐요. 기온·날씨 그림은 ECMWF 기준이에요.</p>
+    <p>미세먼지는 유럽 CAMS 예보(약 5일)이고, PM10·PM2.5 중 더 나쁜 등급을 보여줘요.</p>
+    <p>오늘의 한마디는 낮 시간(09~19시) 비·미세먼지·기온·바람을 보고 고른 참고용 문구예요. 10분마다, 그리고 앱을 다시 열 때마다 새로 받아요. 지금 당장 비구름은 기상청 레이더가 가장 정확해요.</p>
+  </details>
 </div>
 
 <script>
@@ -128,17 +155,40 @@ const MODELS = ['ecmwf_ifs', 'ukmo_seamless', 'icon_seamless', 'gfs_seamless', '
 const CACHE = 'wash-weather-cache-v1';
 const OPEN = 9, CLOSE = 19;
 const $ = id => document.getElementById(id);
+const DOW = ['일', '월', '화', '수', '목', '금', '토'];
+let sel = null, last = null;
 
-const WX = c => c == null ? ['', ''] :
-  c === 0 ? ['☀', '맑음'] : c <= 2 ? ['⛅', '구름 조금'] : c === 3 ? ['☁', '흐림'] :
-  c <= 48 ? ['🌫', '안개'] : c <= 57 ? ['🌦', '이슬비'] : c <= 67 ? ['🌧', '비'] :
-  c <= 77 ? ['❄', '눈'] : c <= 82 ? ['🌧', '소나기'] : c <= 86 ? ['❄', '눈'] : ['⛈', '뇌우'];
+// 날씨 그림 (선 아이콘)
+const CLOUD = 'M7.5 19h9.2a4.3 4.3 0 0 0 .5-8.57A5.8 5.8 0 0 0 6 12a3.5 3.5 0 0 0 1.5 7z';
+const SUN_RAYS = 'M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4';
+function wxKind(c){
+  return c == null ? '' : c === 0 ? 'sun' : c <= 2 ? 'part' : c === 3 ? 'cloud' : c <= 48 ? 'fog' : c <= 57 ? 'drizzle' :
+    c <= 67 ? 'rain' : c <= 77 ? 'snow' : c <= 82 ? 'rain' : c <= 86 ? 'snow' : 'storm';
+}
+const WXNAME = {sun: '맑음', part: '구름 조금', cloud: '흐림', fog: '안개', drizzle: '이슬비', rain: '비', snow: '눈', storm: '뇌우', '': ''};
+function icon(c, night){
+  const k = wxKind(c), s = 'stroke="var(--sun)"', cl = 'stroke="var(--cloud)"', r = 'stroke="var(--rain)"';
+  const up = `<path d="${CLOUD}" ${cl} transform="translate(0 -3)"/>`;
+  const body = {
+    sun: night ? `<path d="M19.5 14.5A8 8 0 1 1 9.5 4.5a6.3 6.3 0 0 0 10 10z" ${s}/>` : `<circle cx="12" cy="12" r="4.2" ${s}/><path d="${SUN_RAYS}" ${s}/>`,
+    part: (night ? `<path d="M12.5 8.2A3.8 3.8 0 1 1 7.8 3.5a3 3 0 0 0 4.7 4.7z" ${s}/>` : `<circle cx="9" cy="8.5" r="3.2" ${s}/><path d="M9 2.6v1.2M3.1 8.5h1.2M4.8 4.3l.9.9M13.2 4.3l-.9.9" ${s}/>`) + `<path d="${CLOUD}" ${cl} fill="var(--surface)"/>`,
+    cloud: `<path d="${CLOUD}" ${cl}/>`,
+    fog: `<path d="M4 8.5h16M6 12.5h12M4 16.5h16" ${cl}/>`,
+    drizzle: up + `<path d="M9 19l-.6 1.5M13 19l-.6 1.5M17 19l-.6 1.5" ${r}/>`,
+    rain: up + `<path d="M8.5 18.5l-1 2.8M12.5 18.5l-1 2.8M16.5 18.5l-1 2.8" ${r}/>`,
+    snow: up + `<circle cx="8.5" cy="19.5" r=".9" fill="var(--cloud)"/><circle cx="12.5" cy="21" r=".9" fill="var(--cloud)"/><circle cx="16.5" cy="19.5" r=".9" fill="var(--cloud)"/>`,
+    storm: up + `<path d="M12.8 17l-2 3h3l-2 3" ${s}/>`,
+  }[k] || '';
+  return `<svg viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="${WXNAME[k]}"><title>${WXNAME[k]}</title>${body}</svg>`;
+}
+
 const PM10 = v => v == null ? null : v <= 30 ? ['좋음', 'good'] : v <= 80 ? ['보통', 'good'] : v <= 150 ? ['나쁨', 'warn'] : ['매우나쁨', 'bad'];
 const PM25 = v => v == null ? null : v <= 15 ? ['좋음', 'good'] : v <= 35 ? ['보통', 'good'] : v <= 75 ? ['나쁨', 'warn'] : ['매우나쁨', 'bad'];
-const DOW = ['일', '월', '화', '수', '목', '금', '토'];
+// PM10·PM2.5 중 더 나쁜 등급
+const worsePm = (a, b) => [PM10(a), PM25(b)].filter(Boolean).sort((x, y) => ['좋음', '보통', '나쁨', '매우나쁨'].indexOf(y[0]) - ['좋음', '보통', '나쁨', '매우나쁨'].indexOf(x[0]))[0] || null;
 
 async function load(){
-  $('status').textContent = '불러오는 중…';
+  $('refresh').classList.add('spin');
   const vars = 'temperature_2m,precipitation,precipitation_probability,weather_code,wind_speed_10m,relative_humidity_2m';
   const fUrl = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=${vars}&models=${MODELS.join(',')}&timezone=Asia%2FSeoul&forecast_days=7&wind_speed_unit=ms`;
   const aUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${LAT}&longitude=${LON}&hourly=pm10,pm2_5&timezone=Asia%2FSeoul&forecast_days=5`;
@@ -150,8 +200,10 @@ async function load(){
     render(data, false);
   } catch(e){
     let old = null; try { old = JSON.parse(localStorage.getItem(CACHE)); } catch(_){}
-    if (old){ render(old, true); }
-    else $('status').innerHTML = `<span class="err">예보를 못 받았어요 (${e.message}). 인터넷 연결을 확인하고 [새로고침]을 눌러 주세요.</span>`;
+    if (old) render(old, true);
+    else $('status').innerHTML = `<span class="err">예보를 못 받았어요. 인터넷 연결을 확인하고 새로고침을 눌러 주세요.</span>`;
+  } finally {
+    $('refresh').classList.remove('spin');
   }
 }
 
@@ -171,6 +223,7 @@ function build({f, a}){
       temp: first('temperature_2m'), wind: first('wind_speed_10m'), hum: first('relative_humidity_2m'), code: first('weather_code'),
       amt: amounts.length ? amounts[Math.floor(amounts.length / 2)] : null, prob, wetN, nModels: amounts.length,
       rain: wetN >= 3 || prob >= 60 ? 2 : wetN >= 2 || prob >= 30 ? 1 : 0,
+      night: d.getHours() < 6 || d.getHours() >= 18,
       pm10: aq[t] ? aq[t].pm10 : null, pm25: aq[t] ? aq[t].pm25 : null,
     };
   });
@@ -198,95 +251,107 @@ function summarize(rows){
     d.anyRain = H.filter(x => x.rain === 2).length;
     d.ranges = rainRanges(H);
     d.probMax = Math.max(0, ...H.map(x => x.prob || 0));
+    d.windMax = Math.max(0, ...biz.map(x => x.wind || 0));
     const pm = biz.map(x => x.pm10).filter(x => x != null), pm2 = biz.map(x => x.pm25).filter(x => x != null);
-    d.pm10 = pm.length ? Math.max(...pm) : null; d.pm25 = pm2.length ? Math.max(...pm2) : null;
-    // PM10·PM2.5 중 더 나쁜 등급을 그날 미세먼지로 쓴다
-    const g = [PM10(d.pm10), PM25(d.pm25)].filter(Boolean), rank = x => ['좋음', '보통', '나쁨', '매우나쁨'].indexOf(x[0]);
-    d.pm = g.length ? g.sort((x, y) => rank(y) - rank(x))[0] : null;
+    d.pm = worsePm(pm.length ? Math.max(...pm) : null, pm2.length ? Math.max(...pm2) : null);
     d.bizMin = Math.min(...biz.map(x => x.temp).filter(x => x != null));
-    const codes = biz.map(x => x.code).filter(x => x != null);
+    const codes = biz.length ? biz.map(x => x.code).filter(x => x != null) : H.map(x => x.code).filter(x => x != null);
     d.code = d.bizRain ? Math.max(...codes) : codes.length ? codes.sort((x, y) => x - y)[Math.floor(codes.length / 2)] : null;
+    // 5개 모델 합의로 비가 아니면 그림도 비로 그리지 않는다 (판단과 그림이 어긋나지 않게)
+    if (!d.bizRain && d.code >= 51) d.code = 3;
   });
-  days.forEach((d, i) => {
-    const prev = days[i - 1], next = days[i + 1];
-    const pmBad = d.pm && d.pm[1] !== 'good';
-    if (d.bizRain >= 2) d.v = ['bad', '비 — 세차 비추', `영업시간에 비 예상 (${d.ranges.join(', ')})`];
-    else if (d.bizRain === 1) d.v = ['warn', '잠깐 비 — 시간 확인', `짧게 비 예상 (${d.ranges.join(', ')})`];
-    else if (d.eveRain >= 2 || (next && next.bizRain >= 2)) d.v = ['warn', '곧 비 소식', d.eveRain >= 2 ? `저녁에 비 (${d.ranges.join(', ')})` : '내일 비 예보 — 오늘 세차는 아까울 수 있어요'];
-    else if (prev && prev.anyRain >= 3) d.v = ['good', '비 그친 뒤 — 세차 수요↑', '전날 비가 와서 차가 더러워진 날이에요'];
-    else if (pmBad) d.v = ['warn', '미세먼지 나쁨', '세차 후 먼지가 금방 앉을 수 있어요'];
-    else if (d.bizMin < 0) d.v = ['warn', '영하 — 결빙 주의', '물기 얼 수 있어요. 문틈·사이드미러 물기 제거 꼼꼼히'];
-    else d.v = ['good', '세차하기 좋음', next ? '오늘·내일 비 소식 없음' : '비 소식 없음 (다음날 예보는 아직 없어요)'];
+  // 그날 날씨 한마디: 중요한 것부터 모아서 맨 앞을 제목으로, 앞의 두 개를 설명으로 쓴다
+  days.forEach(d => {
+    const tips = [], when = d.ranges.length ? ` (${d.ranges.join(', ')})` : '';
+    const snow = d.code >= 71 && d.code <= 77 || d.code === 85 || d.code === 86;
+    if (d.bizRain >= 2) tips.push(snow ? ['bad', '눈 와요', `빙판길 조심하세요${when}`] : ['bad', '비 와요', `우산 챙기세요${when}`]);
+    else if (d.bizRain === 1) tips.push(['warn', '잠깐 비', `작은 우산 챙기세요${when}`]);
+    if (d.hi >= 33) tips.push(['bad', '폭염', '물 자주 드시고 그늘에서 쉬세요']);
+    else if (d.hi >= 30) tips.push(['warn', '더워요', '물 자주 챙겨 드세요']);
+    if (d.pm && d.pm[0] === '매우나쁨') tips.push(['bad', '미세먼지 매우나쁨', '외출할 땐 마스크 꼭 쓰세요']);
+    else if (d.pm && d.pm[0] === '나쁨') tips.push(['warn', '미세먼지 나쁨', '마스크 챙기세요']);
+    if (d.lo < 0) tips.push(['cool', '영하 추위', '두껍게 입고 빙판길 조심하세요']);
+    else if (d.lo <= 5) tips.push(['cool', '쌀쌀해요', '따뜻하게 입으세요']);
+    if (d.windMax >= 9) tips.push(['warn', '바람 강해요', '날리는 물건 조심하세요']);
+    if (!d.bizRain && d.eveRain >= 2) tips.push(['warn', '저녁에 비', `퇴근길 우산 챙기세요${when}`]);
+    if (d.hi - d.lo >= 10) tips.push(['cool', '일교차 커요', '겉옷 하나 챙기세요']);
+    if (!tips.length) tips.push(['good', '날씨 무난해요', '비 소식 없어요']);
+    d.v = [tips[0][0], tips[0][1], tips.slice(0, 2).map((t, i) => i ? `${t[1]}, ${t[2]}` : t[2]).join(' · ')];
   });
   return days;
 }
 
+const md = d => `${d.getMonth() + 1}/${d.getDate()}`;
+const dayName = (d, i) => i === 0 ? '오늘' : i === 1 ? '내일' : DOW[d.d.getDay()];
+const short = v => v[1].split(' — ')[0];
+const hourCode = r => !r.rain && r.code >= 51 ? 3 : r.code;
+
 function render(data, stale){
+  last = data;
   const nowKey = new Date(); nowKey.setMinutes(0, 0, 0);
-  // 이미 지난 시간은 빼고 본다 (오늘 카드도 남은 시간 기준)
+  // 이미 지난 시간은 빼고 본다
   const rows = build(data).filter(r => r.d >= nowKey);
   const days = summarize(rows);
+  if (!days.length) return;
+  if (!days.find(d => d.day === sel)) sel = days[0].day;
   const at = new Date(data.at);
-  $('status').innerHTML = `${stale ? '<span class="err">인터넷 연결 실패 — 마지막으로 받은 예보를 보여줘요. </span>' : ''}업데이트 ${at.getMonth() + 1}/${at.getDate()} ${String(at.getHours()).padStart(2, '0')}:${String(at.getMinutes()).padStart(2, '0')}`;
+  $('status').innerHTML = `${stale ? '<span class="err">연결 실패 · 마지막 예보 </span>' : ''}${String(at.getHours()).padStart(2, '0')}:${String(at.getMinutes()).padStart(2, '0')} 업데이트 · 10분마다 자동`;
 
-  $('today').innerHTML = days.slice(0, 2).map((d, i) => `
-    <div class="verdict ${d.v[0]}">
-      <div class="when">${i ? '내일' : '오늘'} ${d.d.getMonth() + 1}/${d.d.getDate()} (${DOW[d.d.getDay()]})</div>
-      <div class="big">${d.v[1]}</div>
-      <div class="why">${d.v[2]}</div>
-    </div>`).join('');
+  const t = days[0], now = rows[0];
+  $('hero').className = `card hero ${t.v[0]}`;
+  $('hero').innerHTML = `
+    <div class="when">오늘 ${md(t.d)} (${DOW[t.d.getDay()]})</div>
+    <div class="big">${t.v[1]}</div>
+    <div class="why">${t.v[2]}</div>
+    <div class="now num">${icon(hourCode(now), now.night)}<b>${now.temp == null ? '' : Math.round(now.temp) + '°'}</b></div>`;
 
-  $('week').innerHTML = days.map(d => {
-    const [sym, txt] = WX(d.code), p = d.pm;
-    return `<button class="day" type="button" data-day="${d.day}">
-      <div class="d">${DOW[d.d.getDay()]} <span class="sub">${d.d.getMonth() + 1}/${d.d.getDate()}</span></div>
-      <div class="sym" title="${txt}">${sym}</div>
-      <div class="t"><span class="hi">${Math.round(d.hi)}°</span> / <span class="lo">${Math.round(d.lo)}°</span></div>
-      <div class="r">${d.ranges.length ? `비 ${d.ranges.join(', ')} · ${d.sum.toFixed(1)}mm` : d.probMax >= 30 ? `비 가능성 ${d.probMax}%` : ''}</div>
-      <div class="pm">${p ? `미세먼지 ${p[0]}` : '미세먼지 예보 전'}</div>
-      <span class="pill ${d.v[0]}" style="color:var(--${d.v[0]})">${d.v[1].split(' — ')[0]}</span>
-    </button>`;
-  }).join('');
+  const m = days[1];
+  $('tmr').hidden = !m;
+  if (m) $('tmr').innerHTML = `<span class="k">내일</span><span class="chip ${m.v[0]}">${short(m.v)}</span><span class="why">${m.v[2]}</span>`;
 
-  const show = rows;
-  const cls = (r, i) => [r.h >= CLOSE || r.h < 7 ? 'night' : '', i === 0 || r.h === 0 ? 'dstart' : '', +r.d === +nowKey ? 'now' : ''].join(' ');
-  const row = (label, fn, extra) => `<tr${extra || ''}><th class="lab">${label}</th>${show.map((r, i) => `<td class="${cls(r, i)}${fn.wet && r.rain ? ' wet' : ''}" data-day="${r.day}">${fn(r, i)}</td>`).join('')}</tr>`;
-  const wetCell = f => (f.wet = true, f);
-  $('hourly').innerHTML =
-    row('날짜', (r, i) => i === 0 || r.h === 0 ? `${r.d.getMonth() + 1}/${r.d.getDate()} ${DOW[r.d.getDay()]}` : '', ' class="daterow"') +
-    row('시각', r => `${r.h}시`) +
-    row('날씨', r => `<span title="${WX(r.code)[1]}">${WX(r.code)[0]}</span>`) +
-    row('기온', r => r.temp == null ? '' : `${Math.round(r.temp)}°`) +
-    row('강수확률', wetCell(r => r.prob == null ? '' : `<span class="bar" title="${r.prob}%"><i style="height:${r.prob}%"></i></span>${r.prob}%`)) +
-    row('강수량', wetCell(r => r.amt == null || r.amt < 0.1 ? '–' : `${r.amt.toFixed(1)}`)) +
-    row('모델 합의', wetCell(r => `<span class="cons" title="${r.nModels}개 중 ${r.wetN}개가 비 예상">${'●'.repeat(r.wetN)}<b>${'●'.repeat(Math.max(0, r.nModels - r.wetN))}</b></span>`)) +
-    row('바람 m/s', r => r.wind == null ? '' : r.wind.toFixed(0)) +
-    row('습도', r => r.hum == null ? '' : `${Math.round(r.hum)}%`) +
-    row('미세먼지', r => { const g = [PM10(r.pm10), PM25(r.pm25)].filter(Boolean), rank = x => ['좋음', '보통', '나쁨', '매우나쁨'].indexOf(x[0]); const p = g.sort((x, y) => rank(y) - rank(x))[0]; return p ? `<span style="color:var(--${p[1]})">${p[0]}</span>` : ''; });
-
-  document.querySelectorAll('.day').forEach(b => b.onclick = () => {
-    const box = $('hourlyBox');
-    const cell = [...box.querySelectorAll(`td[data-day="${b.dataset.day}"]`)];
-    const target = cell.find((c, i) => show.filter(r => r.day === b.dataset.day)[i].h >= OPEN) || cell[0];
-    if (!target) return;
-    box.scrollTo({left: target.offsetLeft - box.querySelector('th.lab').offsetWidth, behavior: 'smooth'});
-    box.scrollIntoView({behavior: 'smooth', block: 'center'});
+  const lo = Math.min(...days.map(d => d.lo)), hi = Math.max(...days.map(d => d.hi)), span = Math.max(1, hi - lo);
+  $('days').innerHTML = days.map((d, i) => `
+    <button class="d ${d.v[0]}${d.day === sel ? ' sel' : ''}" type="button" data-day="${d.day}">
+      <span class="dw">${dayName(d, i)}<small>${md(d.d)}</small></span>
+      ${icon(d.code)}
+      <span class="mid"><span class="v">${short(d.v)}</span>${d.ranges.length ? `<span class="rn">비 ${d.ranges.join(', ')}</span>` : d.probMax >= 30 ? `<span class="rn">비 가능성 ${d.probMax}%</span>` : ''}</span>
+      <span class="range num"><span class="lo">${Math.round(d.lo)}°</span><span class="bar"><i style="left:${(d.lo - lo) / span * 100}%;right:${(hi - d.hi) / span * 100}%"></i></span><span class="hi">${Math.round(d.hi)}°</span></span>
+    </button>`).join('');
+  document.querySelectorAll('.d').forEach(b => b.onclick = () => {
+    sel = b.dataset.day; render(last, stale);
+    $('strip').closest('.card').scrollIntoView({behavior: 'smooth', block: 'start'});
   });
+
+  const idx = days.findIndex(d => d.day === sel), sd = days[idx];
+  $('hourTitle').textContent = `${idx === 0 ? '오늘' : idx === 1 ? '내일' : `${DOW[sd.d.getDay()]}요일 ${md(sd.d)}`} 시간별`;
+  $('strip').innerHTML = sd.hours.map((r, i) => `
+    <div class="h${r.rain ? ' wet' : ''}${r.h < OPEN || r.h >= CLOSE ? ' off' : ''}${idx === 0 && i === 0 ? ' first' : ''}">
+      <span class="t">${idx === 0 && i === 0 ? '지금' : r.h + '시'}</span>
+      ${icon(hourCode(r), r.night)}
+      <span class="tp num">${r.temp == null ? '' : Math.round(r.temp) + '°'}</span>
+      <span class="pb" title="강수확률 ${r.prob ?? '-'}%"${r.prob >= 10 ? '' : ' style="visibility:hidden"'}><i style="height:${r.prob || 0}%"></i></span>
+      <span class="p num">${r.prob >= 20 ? r.prob + '%' : ''}</span>
+    </div>`).join('');
+  $('strip').classList.toggle('dry', !sd.hours.some(r => r.prob >= 10));
+  // 다른 날을 고르면 아침 7시부터 보이게
+  const strip = $('strip'), start = idx === 0 ? 0 : sd.hours.findIndex(r => r.h >= 7);
+  strip.scrollLeft = start > 0 ? strip.children[start].offsetLeft - strip.offsetLeft - 12 : 0;
+
+  $('dayinfo').innerHTML = [
+    sd.sum >= 0.1 ? `강수량 <b>${sd.sum.toFixed(1)}mm</b>` : `강수 <b>없음</b>`,
+    `미세먼지 <b>${sd.pm ? sd.pm[0] : '예보 전'}</b>`,
+    `바람 최대 <b>${Math.round(sd.windMax)}m/s</b>`,
+  ].map(x => `<span>${x}</span>`).join('');
 }
 
-// 10분마다, 그리고 화면을 다시 켤 때(휴대폰 잠금 해제·탭 복귀)마다 새로 받는다
+// 10분마다, 그리고 화면을 다시 켤 때(잠금 해제·탭 복귀)마다 새로 받는다
 const EVERY = 10 * 60 * 1000;
 let lastLoad = 0;
-function tick(){
-  const left = Math.max(0, EVERY - (Date.now() - lastLoad));
-  if (lastLoad && left === 0) return refreshNow();
-  $('next').textContent = lastLoad ? `다음 자동 새로고침 ${Math.ceil(left / 60000)}분 뒤` : '';
-}
-function refreshNow(){ lastLoad = Date.now(); load(); tick(); }
+function refreshNow(){ lastLoad = Date.now(); load(); }
 $('refresh').onclick = refreshNow;
 document.addEventListener('visibilitychange', () => { if (!document.hidden && Date.now() - lastLoad > 60 * 1000) refreshNow(); });
+setInterval(() => { if (Date.now() - lastLoad >= EVERY) refreshNow(); }, 30 * 1000);
 refreshNow();
-setInterval(tick, 30 * 1000);
 </script>
 </body>
 </html>
