@@ -102,6 +102,19 @@ button:focus-visible{outline:2px solid var(--rain);outline-offset:2px}
 .range .bar{height:4px;border-radius:2px;background:var(--line);position:relative}
 .range .bar i{position:absolute;top:0;bottom:0;border-radius:2px;background:linear-gradient(90deg,var(--rain),var(--sun))}
 
+/* 매장 카드: 명함과 같은 검정 바탕 */
+.brand{background:#000;color:#fff;border-radius:18px;padding:22px 20px 18px;display:grid;gap:12px}
+.brand img{width:100%;max-width:340px;height:auto;display:block}
+.brand .addr{color:#c9cdd2;font-size:13.5px;text-decoration:none}
+.brand .bbtn{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.brand .bbtn a{text-align:center;text-decoration:none;font-size:14px;font-weight:600;border-radius:12px;padding:11px 8px;color:#fff;background:#1d1f22}
+.brand .bbtn a:last-child{background:#fee500;color:#191600}
+.brand a:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.install summary{font-size:14px;font-weight:600;color:var(--ink);padding:0}
+.install p{margin:8px 0 0;font-size:13.5px}
+.install .muted{color:var(--muted);font-size:12.5px}
+.installBtn{margin-top:12px;width:100%;border:0;border-radius:12px;padding:12px;background:var(--rain);color:#fff;font:inherit;font-weight:700;cursor:pointer}
+@media (display-mode: standalone){.install{display:none}}
 .links{display:flex;flex-wrap:wrap;gap:8px}
 .links a{flex:1 1 auto;text-align:center;font-size:13.5px;color:var(--ink);text-decoration:none;background:var(--surface);border-radius:12px;padding:11px 12px}
 .links a:hover{color:var(--rain)}
@@ -138,6 +151,24 @@ details p{margin:6px 0}
     <div class="days" id="days"></div>
   </section>
 
+  <section class="brand">
+    <img src="brand.png" width="1056" height="234" alt="WASH &amp; MEMORY — 세차·광택·유리막코팅·실내크리닝">
+    <a class="addr" href="https://map.naver.com/p/search/%EC%9B%8C%EC%8B%9C%EB%A9%94%EB%AA%A8%EB%A6%AC%20%EC%88%98%EC%9B%90" target="_blank" rel="noopener">경기도 수원시 장안구 하률로 27 (천천동)</a>
+    <div class="bbtn">
+      <a href="tel:01098534666">전화 010-9853-4666</a>
+      <a href="https://open.kakao.com/o/sQqatW6c" target="_blank" rel="noopener">카카오톡 문의</a>
+    </div>
+  </section>
+
+  <details class="card install" id="install">
+    <summary>홈 화면에 앱처럼 추가하기</summary>
+    <button class="installBtn" id="installBtn" type="button" hidden>지금 설치하기</button>
+    <p><b>갤럭시 (크롬)</b> 오른쪽 위 ⋮ → <b>홈 화면에 추가</b> 또는 <b>설치</b></p>
+    <p><b>갤럭시 (삼성 인터넷)</b> 아래 ≡ → <b>현재 페이지 추가</b> → <b>홈 화면</b></p>
+    <p><b>아이폰 (사파리)</b> 아래 공유 버튼 → <b>홈 화면에 추가</b></p>
+    <p class="muted">추가하면 아이콘을 누를 때마다 최신 예보로 열려요.</p>
+  </details>
+
   <nav class="links">
     <a href="https://www.weather.go.kr/w/image/radar.do" target="_blank" rel="noopener">기상청 레이더</a>
     <a href="https://www.weather.go.kr/w/index.do" target="_blank" rel="noopener">기상청 날씨누리</a>
@@ -146,7 +177,7 @@ details p{margin:6px 0}
 
   <details>
     <summary>예보 기준 보기</summary>
-    <p>유럽(ECMWF)·영국·독일·미국·일본 기상청의 5개 예보 모델을 Open-Meteo로 받아 합쳐요. 3개 이상 모델이 비(0.1mm↑)를 예상하거나 평균 강수확률이 60% 이상이면 "비"로 봐요. 기온·날씨 그림은 ECMWF 기준이에요.</p>
+    <p>유럽(ECMWF)·영국·독일·미국·일본 기상청의 5개 예보 모델을 Open-Meteo로 받아 합쳐요. 3개 이상 모델이 비(0.1mm↑)를 예상하거나 평균 강수확률이 60% 이상이면 "비"로 봐요. 시간대가 서로 달라도 낮에 1mm 이상 비를 보는 모델이 3곳 이상이면 "비 올 가능성 높아요"로 알려드려요. 기온·날씨 그림은 ECMWF 기준이에요.</p>
     <p>미세먼지는 유럽 CAMS 예보(약 5일)이고, PM10·PM2.5 중 더 나쁜 등급을 보여줘요.</p>
     <p>오늘의 한마디는 낮 시간(09~19시) 비·미세먼지·기온·바람을 보고 고른 참고용 문구예요. 10분마다, 그리고 앱을 다시 열 때마다 새로 받아요. 지금 당장 비구름은 기상청 레이더가 가장 정확해요.</p>
   </details>
@@ -215,6 +246,7 @@ function build({f, a}){
   if (a && a.hourly) a.hourly.time.forEach((t, i) => aq[t] = {pm10: a.hourly.pm10[i], pm25: a.hourly.pm2_5[i]});
   return H.time.map((t, i) => {
     const pick = v => MODELS.map(m => H[`${v}_${m}`] ? H[`${v}_${m}`][i] : null).filter(x => x != null);
+    const byModel = MODELS.map(m => H[`precipitation_${m}`] ? H[`precipitation_${m}`][i] : null);
     const amounts = pick('precipitation').sort((x, y) => x - y);
     const probs = pick('precipitation_probability');
     const wetN = amounts.filter(x => x >= 0.1).length;
@@ -224,7 +256,7 @@ function build({f, a}){
     return {
       t, d, h: d.getHours(), day: t.slice(0, 10),
       temp: first('temperature_2m'), wind: first('wind_speed_10m'), hum: first('relative_humidity_2m'), code: first('weather_code'),
-      amt: amounts.length ? amounts[Math.floor(amounts.length / 2)] : null, prob, wetN, nModels: amounts.length,
+      amt: amounts.length ? amounts[Math.floor(amounts.length / 2)] : null, prob, wetN, nModels: amounts.length, byModel,
       rain: wetN >= 3 || prob >= 60 ? 2 : wetN >= 2 || prob >= 30 ? 1 : 0,
       night: d.getHours() < 6 || d.getHours() >= 18,
       pm10: aq[t] ? aq[t].pm10 : null, pm25: aq[t] ? aq[t].pm25 : null,
@@ -255,20 +287,26 @@ function summarize(rows){
     d.ranges = rainRanges(H);
     d.probMax = Math.max(0, ...H.map(x => x.prob || 0));
     d.windMax = Math.max(0, ...biz.map(x => x.wind || 0));
+    // 시간대가 엇갈려도 낮(09~19시)에 1mm 이상 비를 보는 모델 수 — 모델마다 비 시각이 다른 날을 놓치지 않으려고
+    const span = biz.length ? biz : H;
+    const sums = MODELS.map((m, j) => span.some(x => x.byModel[j] != null) ? span.reduce((s, x) => s + (x.byModel[j] || 0), 0) : null).filter(x => x != null);
+    d.dayWet = sums.filter(x => x >= 1).length; d.dayN = sums.length;
     const pm = biz.map(x => x.pm10).filter(x => x != null), pm2 = biz.map(x => x.pm25).filter(x => x != null);
     d.pm = worsePm(pm.length ? Math.max(...pm) : null, pm2.length ? Math.max(...pm2) : null);
     d.bizMin = Math.min(...biz.map(x => x.temp).filter(x => x != null));
     const codes = biz.length ? biz.map(x => x.code).filter(x => x != null) : H.map(x => x.code).filter(x => x != null);
     d.code = d.bizRain ? Math.max(...codes) : codes.length ? codes.sort((x, y) => x - y)[Math.floor(codes.length / 2)] : null;
     // 5개 모델 합의로 비가 아니면 그림도 비로 그리지 않는다 (판단과 그림이 어긋나지 않게)
-    if (!d.bizRain && d.code >= 51) d.code = 3;
+    if (!d.bizRain && d.dayWet < 3 && d.code >= 51) d.code = 3;
+    if (!d.bizRain && d.dayWet >= 3 && d.code < 51) d.code = 61;
   });
   // 그날 날씨 한마디: 중요한 것부터 모아서 맨 앞을 제목으로, 앞의 두 개를 설명으로 쓴다
   days.forEach(d => {
     const tips = [], when = d.ranges.length ? ` (${d.ranges.join(', ')})` : '';
     const snow = d.code >= 71 && d.code <= 77 || d.code === 85 || d.code === 86;
     if (d.bizRain >= 2) tips.push(snow ? ['bad', '눈 와요', `빙판길 조심하세요${when}`] : ['bad', '비 와요', `우산 챙기세요${when}`]);
-    else if (d.bizRain === 1) tips.push(['warn', '잠깐 비', `작은 우산 챙기세요${when}`]);
+    else if (d.dayWet >= 3) tips.push(['bad', '비 올 가능성 높아요', `우산 챙기세요 (예보 ${d.dayN}곳 중 ${d.dayWet}곳이 비, 시간은 엇갈려요)`]);
+    else if (d.bizRain === 1 || d.dayWet === 2) tips.push(['warn', d.bizRain ? '잠깐 비' : '비 올 수도', `작은 우산 챙기세요${when}`]);
     if (d.hi >= 33) tips.push(['bad', '폭염', '물 자주 드시고 그늘에서 쉬세요']);
     else if (d.hi >= 30) tips.push(['warn', '더워요', '물 자주 챙겨 드세요']);
     if (d.pm && d.pm[0] === '매우나쁨') tips.push(['bad', '미세먼지 매우나쁨', '외출할 땐 마스크 꼭 쓰세요']);
@@ -355,6 +393,11 @@ $('refresh').onclick = refreshNow;
 document.addEventListener('visibilitychange', () => { if (!document.hidden && Date.now() - lastLoad > 60 * 1000) refreshNow(); });
 setInterval(() => { if (Date.now() - lastLoad >= EVERY) refreshNow(); }, 30 * 1000);
 refreshNow();
+
+// 크롬이 설치를 허용하면 안내 상자에 [지금 설치하기] 버튼을 띄운다
+let installEvt = null;
+addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; $('installBtn').hidden = false; });
+$('installBtn').onclick = async () => { if (!installEvt) return; installEvt.prompt(); await installEvt.userChoice; installEvt = null; $('installBtn').hidden = true; };
 </script>
 </body>
 </html>
